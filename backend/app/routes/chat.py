@@ -4,7 +4,7 @@ from pydantic import BaseModel
 from app.services.deep_search import deep_search
 from app.services.llm_service import stream_answer
 
-router = APIRouter()
+router = APIRouter(prefix="/chat", tags=["Chat"])
 
 
 class ChatRequest(BaseModel):
@@ -13,7 +13,6 @@ class ChatRequest(BaseModel):
 
 @router.post("/")
 async def chat(req: ChatRequest):
-
     docs = deep_search(req.query)
     top_docs = docs[:4]
 

@@ -4,3 +4,11 @@ pydantic-settings
 google-genai
 qdrant-client
 python-dotenv
+beautifulsoup4
+requests
+pdfplumber
+python-docx
+pandas
+openpyxl
+python-pptx
+tqdm
