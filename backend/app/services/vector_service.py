@@ -31,7 +31,7 @@ def create_collection():
     client.recreate_collection(
         collection_name=settings.QDRANT_COLLECTION,
         vectors_config=VectorParams(
-            size=768,
+            size=3072,
             distance=Distance.COSINE,
         ),
     )
