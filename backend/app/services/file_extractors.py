@@ -1,16 +1,11 @@
-import requests
 from bs4 import BeautifulSoup
-from io import BytesIO
 import pdfplumber
 import docx
 import pandas as pd
+from io import BytesIO
 
-
-def extract_html(url):
-    response = requests.get(url, timeout=10)
-    response.raise_for_status()
-
-    soup = BeautifulSoup(response.text, "html.parser")
+def extract_html(content: bytes):
+    soup = BeautifulSoup(content, "html.parser")
 
     for tag in soup(["script", "style", "nav", "footer"]):
         tag.decompose()
@@ -18,7 +13,7 @@ def extract_html(url):
     return soup.get_text(separator=" ", strip=True)
 
 
-def extract_pdf(content):
+def extract_pdf(content: bytes):
     text = ""
     with pdfplumber.open(BytesIO(content)) as pdf:
         for page in pdf.pages:
@@ -26,25 +21,22 @@ def extract_pdf(content):
     return text
 
 
-def extract_docx(content):
+def extract_docx(content: bytes):
     doc = docx.Document(BytesIO(content))
     return "\n".join([p.text for p in doc.paragraphs])
 
 
-def extract_xlsx(content):
+def extract_xlsx(content: bytes):
     df = pd.read_excel(BytesIO(content))
     return df.to_string()
 
 
-def extract_pptx(content):
+def extract_pptx(content: bytes):
     from pptx import Presentation
-
     prs = Presentation(BytesIO(content))
     text = ""
-
     for slide in prs.slides:
         for shape in slide.shapes:
             if hasattr(shape, "text"):
                 text += shape.text + "\n"
-
     return text

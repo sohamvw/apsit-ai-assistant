@@ -1,10 +1,13 @@
 from app.services.crawler_service import crawl_website
-from app.services.file_extractors import extract_html
+from app.services.file_extractors import (
+    extract_html,
+    extract_pdf,
+    extract_docx,
+    extract_xlsx,
+    extract_pptx,
+)
 from app.services.vector_service import insert_document
-from app.core.config import get_settings
 import time
-
-settings = get_settings()
 
 
 def run_ingestion():
@@ -12,21 +15,38 @@ def run_ingestion():
 
     print("Starting crawl...")
 
-    urls = crawl_website(start_url, max_pages=100)
+    pages = crawl_website(start_url, max_pages=1000)
 
-    print(f"Found {len(urls)} pages")
+    count = 0
 
-    for url in urls:
+    for url, content_type, content in pages:
         try:
-            text = extract_html(url)
+            if "text/html" in content_type:
+                text = extract_html(content)
 
-            if len(text) > 300:
+            elif "application/pdf" in content_type:
+                text = extract_pdf(content)
+
+            elif "application/vnd.openxmlformats-officedocument.wordprocessingml.document" in content_type:
+                text = extract_docx(content)
+
+            elif "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" in content_type:
+                text = extract_xlsx(content)
+
+            elif "application/vnd.openxmlformats-officedocument.presentationml.presentation" in content_type:
+                text = extract_pptx(content)
+
+            else:
+                continue
+
+            if text and len(text.strip()) > 300:
                 insert_document(text[:5000], url)
+                count += 1
                 print(f"Ingested: {url}")
 
-            time.sleep(0.5)
+            time.sleep(0.3)
 
         except Exception as e:
             print(f"Failed: {url} -> {e}")
 
-    print("Ingestion completed")
+    print("Ingestion completed. Total inserted: {count}")
