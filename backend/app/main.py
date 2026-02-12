@@ -18,15 +18,12 @@ app.add_middleware(
 app.include_router(chat_router)
 app.include_router(ingestion_router)
 
+
 @app.on_event("startup")
 async def startup_event():
     create_collection()
 
+
 @app.get("/health")
 async def health():
     return {"status": "ok"}
-
-if __name__ == "__main__":
-    import uvicorn
-    port = int(os.environ.get("PORT", 8000))
-    uvicorn.run("app.main:app", host="0.0.0.0", port=port)

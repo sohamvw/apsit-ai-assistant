@@ -12,3 +12,4 @@ pandas
 openpyxl
 python-pptx
 tqdm
+playwright

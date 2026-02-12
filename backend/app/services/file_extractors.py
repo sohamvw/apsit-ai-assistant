@@ -1,26 +1,21 @@
 import requests
 from bs4 import BeautifulSoup
+from io import BytesIO
 import pdfplumber
 import docx
 import pandas as pd
-from io import BytesIO
 
 
 def extract_html(url):
-    try:
-        response = requests.get(url, timeout=10)
-        html = response.text  # ✅ use decoded text
+    response = requests.get(url, timeout=10)
+    response.raise_for_status()
 
-        soup = BeautifulSoup(html, "html.parser")
+    soup = BeautifulSoup(response.text, "html.parser")
 
-        for tag in soup(["script", "style", "nav", "footer"]):
-            tag.decompose()
+    for tag in soup(["script", "style", "nav", "footer"]):
+        tag.decompose()
 
-        return soup.get_text(separator=" ", strip=True)
-
-    except Exception as e:
-        print("HTML extraction error:", e)
-        return ""
+    return soup.get_text(separator=" ", strip=True)
 
 
 def extract_pdf(content):
@@ -43,10 +38,13 @@ def extract_xlsx(content):
 
 def extract_pptx(content):
     from pptx import Presentation
+
     prs = Presentation(BytesIO(content))
     text = ""
+
     for slide in prs.slides:
         for shape in slide.shapes:
             if hasattr(shape, "text"):
                 text += shape.text + "\n"
+
     return text

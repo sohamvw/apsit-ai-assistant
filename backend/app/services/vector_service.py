@@ -1,8 +1,9 @@
 from qdrant_client import QdrantClient
-from qdrant_client.http.models import Distance, VectorParams
+from qdrant_client.http.models import Distance, VectorParams, PointStruct
 from google import genai
 from google.genai import types
 from app.core.config import get_settings
+import uuid
 
 settings = get_settings()
 
@@ -21,9 +22,9 @@ client = QdrantClient(
 
 
 # -----------------------------
-# Embedding Function
+# Embedding
 # -----------------------------
-def get_dense_embedding(text: str):
+def get_embedding(text: str):
     response = genai_client.models.embed_content(
         model="gemini-embedding-001",
         contents=text,
@@ -35,22 +36,37 @@ def get_dense_embedding(text: str):
 
 
 # -----------------------------
-# Create Collections (On Startup)
+# Create Collection If Not Exists
 # -----------------------------
 def create_collection():
-    client.recreate_collection(
-        collection_name=settings.QDRANT_COLLECTION,
-        vectors_config=VectorParams(
-            size=3072,
-            distance=Distance.COSINE,
-        ),
-    )
+    collections = [c.name for c in client.get_collections().collections]
 
-    # State collection
-    client.recreate_collection(
-        collection_name="apsit_ingestion_state",
-        vectors_config=VectorParams(
-            size=3072,
-            distance=Distance.COSINE,
-        ),
+    if settings.QDRANT_COLLECTION not in collections:
+        client.create_collection(
+            collection_name=settings.QDRANT_COLLECTION,
+            vectors_config=VectorParams(
+                size=3072,
+                distance=Distance.COSINE,
+            ),
+        )
+
+
+# -----------------------------
+# Insert Document
+# -----------------------------
+def insert_document(text: str, url: str):
+    vector = get_embedding(text)
+
+    client.upsert(
+        collection_name=settings.QDRANT_COLLECTION,
+        points=[
+            PointStruct(
+                id=str(uuid.uuid4()),
+                vector=vector,
+                payload={
+                    "text": text,
+                    "url": url,
+                },
+            )
+        ],
     )
