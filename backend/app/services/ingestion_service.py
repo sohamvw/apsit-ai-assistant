@@ -9,7 +9,11 @@ settings = get_settings()
 def run_ingestion():
     print("🚀 Starting ingestion...")
 
-    documents = crawl_site("https://www.apsit.edu.in/")
+    documents = crawl_site(
+    start_url="https://www.apsit.edu.in/",
+    domain="apsit.edu.in"
+)
+
 
     points = []
 
