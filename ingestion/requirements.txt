@@ -1,0 +1,7 @@
+requests
+beautifulsoup4
+qdrant-client
+sentence-transformers
+llama-index>=0.10.37
+llama-index-vector-stores-qdrant
+llama-index-embeddings-huggingface

@@ -1,0 +1,6 @@
+Departments at APSIT:
+- Computer Engineering
+- Information Technology
+- Electronics & Telecommunication
+- Mechanical Engineering
+- Artificial Intelligence & Data Science
