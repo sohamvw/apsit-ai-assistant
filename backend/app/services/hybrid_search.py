@@ -4,15 +4,23 @@ from app.core.config import get_settings
 settings = get_settings()
 
 
-def hybrid_search(query: str, limit: int = 8):
-    dense_vector = get_dense_embedding(query)
+def hybrid_search(query: str, limit: int = 5):
 
-    results = client.search(
+    query_vector = get_dense_embedding(query)
+
+    results = client.query_points(
         collection_name=settings.QDRANT_COLLECTION,
-        query_vector=dense_vector,
+        query=query_vector,
         limit=limit,
-        with_payload=True,
-        with_vectors=False,
+        with_payload=True
     )
 
-    return [r.payload["text"] for r in results]
+    documents = []
+
+    for point in results.points:
+        documents.append({
+            "text": point.payload.get("text", ""),
+            "url": point.payload.get("url", "")
+        })
+
+    return documents
