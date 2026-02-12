@@ -27,11 +27,9 @@ At the end always add:
 "For more queries visit the college campus or contact us."
 """
 
-    response = client.models.generate_content_stream(
-        model="gemini-2.5-flash",
+    response = client.models.generate_content(
+        model="models/gemini-2.5-flash",
         contents=prompt
     )
 
-    for chunk in response:
-        if chunk.text:
-            yield chunk.text
+    yield response.text
