@@ -36,12 +36,12 @@ def get_embedding(text: str):
 
 
 # -----------------------------
-# Create Collection If Not Exists
-# -----------------------------
-def create_collection():
-    collections = [c.name for c in client.get_collections().collections]
+from qdrant_client.http.exceptions import UnexpectedResponse
 
-    if settings.QDRANT_COLLECTION not in collections:
+def create_collection():
+    try:
+        client.get_collection(settings.QDRANT_COLLECTION)
+    except UnexpectedResponse:
         client.create_collection(
             collection_name=settings.QDRANT_COLLECTION,
             vectors_config=VectorParams(
@@ -50,6 +50,16 @@ def create_collection():
             ),
         )
 
+    try:
+        client.get_collection("apsit_ingestion_state")
+    except UnexpectedResponse:
+        client.create_collection(
+            collection_name="apsit_ingestion_state",
+            vectors_config=VectorParams(
+                size=3072,
+                distance=Distance.COSINE,
+            ),
+        )
 
 # -----------------------------
 # Insert Document
