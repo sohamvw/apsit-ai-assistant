@@ -3,7 +3,7 @@ import requests
 from bs4 import BeautifulSoup
 
 BASE_DOMAIN = "apsit.edu.in"
-MAX_PAGES = 2000
+MAX_PAGES = 500
 TIMEOUT = 10
 
 
@@ -26,6 +26,10 @@ def crawl(start_url):
             print("Crawling:", url)
 
             response = requests.get(url, timeout=TIMEOUT)
+
+            if response.status_code != 200:
+                continue
+
             content_type = response.headers.get("content-type", "")
 
             visited.add(url)
@@ -35,14 +39,20 @@ def crawl(start_url):
             if "text/html" in content_type:
                 soup = BeautifulSoup(response.text, "html.parser")
 
-                links = soup.find_all("a", href=True)
+                for a in soup.find_all("a", href=True):
+                    href = a["href"].strip()
 
-                for a in links:
-                    href = a["href"]
+                    if not href:
+                        continue
+
                     full_url = urljoin(url, href)
                     full_url = full_url.split("#")[0]
 
-                    if is_internal(full_url) and full_url not in visited:
+                    if (
+                        is_internal(full_url)
+                        and full_url not in visited
+                        and full_url.startswith("http")
+                    ):
                         queue.append(full_url)
 
         except Exception as e:

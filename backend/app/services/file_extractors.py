@@ -5,11 +5,22 @@ import docx
 import pandas as pd
 from io import BytesIO
 
-def extract_html(content):
-    soup = BeautifulSoup(content, "html.parser")
-    for tag in soup(["script", "style", "nav", "footer"]):
-        tag.decompose()
-    return soup.get_text(separator=" ", strip=True)
+
+def extract_html(url):
+    try:
+        response = requests.get(url, timeout=10)
+        html = response.text  # ✅ use decoded text
+
+        soup = BeautifulSoup(html, "html.parser")
+
+        for tag in soup(["script", "style", "nav", "footer"]):
+            tag.decompose()
+
+        return soup.get_text(separator=" ", strip=True)
+
+    except Exception as e:
+        print("HTML extraction error:", e)
+        return ""
 
 
 def extract_pdf(content):
@@ -19,13 +30,16 @@ def extract_pdf(content):
             text += page.extract_text() or ""
     return text
 
+
 def extract_docx(content):
     doc = docx.Document(BytesIO(content))
     return "\n".join([p.text for p in doc.paragraphs])
 
+
 def extract_xlsx(content):
     df = pd.read_excel(BytesIO(content))
     return df.to_string()
+
 
 def extract_pptx(content):
     from pptx import Presentation
