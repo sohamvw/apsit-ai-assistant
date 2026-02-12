@@ -2,7 +2,6 @@ from fastapi import APIRouter
 from fastapi.responses import StreamingResponse
 from pydantic import BaseModel
 from app.services.deep_search import deep_search
-from app.services.reranker import rerank
 from app.services.llm_service import stream_answer
 
 router = APIRouter()
@@ -16,8 +15,7 @@ class ChatRequest(BaseModel):
 async def chat(req: ChatRequest):
 
     docs = deep_search(req.query)
-    ranked_docs = rerank(req.query, docs)
-    top_docs = ranked_docs[:4]
+    top_docs = docs[:4]
 
     async def generate():
         async for chunk in stream_answer(req.query, top_docs):
