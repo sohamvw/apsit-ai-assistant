@@ -1,57 +1,52 @@
-from urllib.parse import urljoin, urlparse, urldefrag
+from urllib.parse import urljoin, urlparse
 import requests
 from bs4 import BeautifulSoup
 
 BASE_DOMAIN = "apsit.edu.in"
-MAX_PAGES = 200        # safety limit
+MAX_PAGES = 300
 TIMEOUT = 10
 
 
 def is_internal(url):
     parsed = urlparse(url)
-    return BASE_DOMAIN in parsed.netloc
-
-
-def normalize_url(url):
-    # Remove fragments like #section
-    url, _ = urldefrag(url)
-    return url.rstrip("/")
+    return parsed.netloc.endswith(BASE_DOMAIN)
 
 
 def crawl(start_url):
     visited = set()
-    to_visit = [normalize_url(start_url)]
-    pages_crawled = 0
+    queue = [start_url]
 
-    while to_visit and pages_crawled < MAX_PAGES:
-        url = to_visit.pop(0)  # BFS (better for wide crawl)
+    while queue and len(visited) < MAX_PAGES:
+        url = queue.pop(0)
 
         if url in visited:
             continue
 
-        visited.add(url)
-
         try:
-            response = requests.get(url, timeout=TIMEOUT)
+            print("Crawling:", url)
 
+            response = requests.get(url, timeout=TIMEOUT)
             content_type = response.headers.get("content-type", "")
 
-            print("Crawling:", url)
+            visited.add(url)
 
             yield url, content_type, response.content
 
-            pages_crawled += 1
-
-            # Only parse HTML for new links
             if "text/html" in content_type:
                 soup = BeautifulSoup(response.text, "html.parser")
 
-                for a in soup.find_all("a", href=True):
-                    link = urljoin(url, a["href"])
-                    link = normalize_url(link)
+                links = soup.find_all("a", href=True)
+                print("Found links:", len(links))
 
-                    if is_internal(link) and link not in visited:
-                        to_visit.append(link)
+                for a in links:
+                    href = a["href"]
+                    full_url = urljoin(url, href)
+
+                    # Remove fragments
+                    full_url = full_url.split("#")[0]
+
+                    if is_internal(full_url) and full_url not in visited:
+                        queue.append(full_url)
 
         except Exception as e:
             print("Crawler error:", e)
