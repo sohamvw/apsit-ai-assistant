@@ -15,6 +15,9 @@ client = QdrantClient(
     api_key=settings.QDRANT_API_KEY,
 )
 
+# -----------------------------
+# Embedding Function
+# -----------------------------
 def get_dense_embedding(text: str):
     response = genai_client.models.embed_content(
         model="gemini-embedding-001",
@@ -26,6 +29,9 @@ def get_dense_embedding(text: str):
     return response.embeddings[0].values
 
 
+# -----------------------------
+# Create Collection
+# -----------------------------
 def create_collection():
     collections = client.get_collections().collections
     existing = [c.name for c in collections]
@@ -38,3 +44,6 @@ def create_collection():
                 distance=Distance.COSINE,
             ),
         )
+        print("Collection created.")
+    else:
+        print("Collection already exists.")
