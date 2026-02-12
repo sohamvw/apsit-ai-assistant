@@ -21,3 +21,9 @@ Thumbs.db
 .env.production
 .vercel
 
+node_modules/
+.next/
+auto_data/
+__pycache__/
+*.pyc
+.env
