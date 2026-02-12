@@ -3,6 +3,4 @@ uvicorn[standard]
 pydantic-settings
 google-generativeai
 qdrant-client
-sentence-transformers
-scrapy
 python-dotenv
