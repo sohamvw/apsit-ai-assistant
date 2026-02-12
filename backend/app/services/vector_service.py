@@ -70,3 +70,5 @@ def insert_document(text: str, url: str):
             )
         ],
     )
+# Backward compatibility for old imports
+get_dense_embedding = get_embedding
