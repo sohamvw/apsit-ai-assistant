@@ -1,49 +1,50 @@
 import requests
 from bs4 import BeautifulSoup
 from urllib.parse import urljoin, urlparse
-from collections import deque
+import time
 
 
-def crawl_website(start_url, max_pages=500):
+def crawl_site(start_url: str, max_pages: int = 30):
     visited = set()
-    queue = deque([start_url])
+    to_visit = [start_url]
     results = []
 
-    base_domain = urlparse(start_url).netloc.replace("www.", "")
+    domain = urlparse(start_url).netloc
 
-    while queue and len(visited) < max_pages:
-        url = queue.popleft()
+    while to_visit and len(visited) < max_pages:
+        url = to_visit.pop(0)
 
         if url in visited:
             continue
 
         try:
+            print(f"🔎 Crawling: {url}")
             response = requests.get(url, timeout=10)
-            response.raise_for_status()
-        except:
-            continue
-
-        visited.add(url)
-
-        content_type = response.headers.get("Content-Type", "")
-
-        results.append(
-            (url, content_type, response.content)
-        )
-
-        if "text/html" in content_type:
             soup = BeautifulSoup(response.text, "html.parser")
 
+            text = soup.get_text(separator=" ", strip=True)
+
+            results.append({
+                "url": url,
+                "text": text
+            })
+
+            visited.add(url)
+
+            # Extract links
             for link in soup.find_all("a", href=True):
-                absolute_url = urljoin(url, link["href"])
-                parsed = urlparse(absolute_url)
+                href = link["href"]
+                full_url = urljoin(url, href)
+                parsed = urlparse(full_url)
 
-                clean_domain = parsed.netloc.replace("www.", "")
+                if parsed.netloc == domain:
+                    if full_url not in visited:
+                        to_visit.append(full_url)
 
-                if clean_domain == base_domain:
-                    clean_url = parsed.scheme + "://" + parsed.netloc + parsed.path
+            time.sleep(0.5)
 
-                    if clean_url not in visited:
-                        queue.append(clean_url)
+        except Exception as e:
+            print(f"❌ Failed to crawl {url}: {e}")
 
+    print(f"✅ Crawled {len(results)} pages")
     return results
