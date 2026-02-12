@@ -1,32 +1,21 @@
 from qdrant_client import QdrantClient
-from qdrant_client.http.models import Distance, VectorParams, PointStruct
+from qdrant_client.http.models import Distance, VectorParams
 from google import genai
 from google.genai import types
 from app.core.config import get_settings
-import uuid
 
 settings = get_settings()
 
-# -----------------------------
-# Gemini Client
-# -----------------------------
+# Gemini client
 genai_client = genai.Client(api_key=settings.GEMINI_API_KEY)
 
-# -----------------------------
-# Qdrant Client
-# -----------------------------
+# Qdrant client
 client = QdrantClient(
     url=settings.QDRANT_URL,
     api_key=settings.QDRANT_API_KEY,
 )
 
-COLLECTION_NAME = settings.QDRANT_COLLECTION
-
-
-# -----------------------------
-# Embedding Function
-# -----------------------------
-def get_embedding(text: str):
+def get_dense_embedding(text: str):
     response = genai_client.models.embed_content(
         model="gemini-embedding-001",
         contents=text,
@@ -37,41 +26,15 @@ def get_embedding(text: str):
     return response.embeddings[0].values
 
 
-# -----------------------------
-# Create Collection (SAFE)
-# -----------------------------
 def create_collection():
     collections = client.get_collections().collections
     existing = [c.name for c in collections]
 
-    if COLLECTION_NAME not in existing:
+    if settings.QDRANT_COLLECTION not in existing:
         client.create_collection(
-            collection_name=COLLECTION_NAME,
+            collection_name=settings.QDRANT_COLLECTION,
             vectors_config=VectorParams(
                 size=3072,
                 distance=Distance.COSINE,
             ),
         )
-        print("Collection created.")
-    else:
-        print("Collection already exists.")
-
-# Insert Document
-# -----------------------------
-def insert_document(text: str, source: str):
-    embedding = get_embedding(text)
-
-    client.upsert(
-        collection_name=COLLECTION_NAME,
-        points=[
-            PointStruct(
-                id=str(uuid.uuid4()),
-                vector=embedding,
-                payload={
-                    "text": text,
-                    "source": source
-                },
-            )
-        ],
-    )
-
