@@ -1,49 +1,68 @@
 import os
-from llama_index.core import SimpleDirectoryReader, VectorStoreIndex, StorageContext
-from llama_index.vector_stores.qdrant import QdrantVectorStore
-from llama_index.embeddings.huggingface import HuggingFaceEmbedding
-import qdrant_client
+from qdrant_client import QdrantClient
+from qdrant_client.models import VectorParams, Distance, PointStruct
+from sentence_transformers import SentenceTransformer
+import uuid
 
 QDRANT_URL = os.environ["QDRANT_URL"]
 QDRANT_API_KEY = os.environ["QDRANT_API_KEY"]
 
 COLLECTION_NAME = "apsit-knowledge"
 
-def ingest_documents(data_dir):
-    print("[LOAD] Reading documents...")
+embedding_model = SentenceTransformer("sentence-transformers/all-MiniLM-L6-v2")
 
-    docs = SimpleDirectoryReader(
-        data_dir,
-        recursive=True,
-        required_exts=[".txt", ".pdf"]
-    ).load_data()
+client = QdrantClient(
+    url=QDRANT_URL,
+    api_key=QDRANT_API_KEY,
+)
 
-    print(f"[INFO] Documents loaded: {len(docs)}")
+def ensure_collection(vector_size: int):
+    collections = client.get_collections().collections
+    existing = [c.name for c in collections]
 
-    client = qdrant_client.QdrantClient(
-        url=QDRANT_URL,
-        api_key=QDRANT_API_KEY,
-    )
+    if COLLECTION_NAME not in existing:
+        client.create_collection(
+            collection_name=COLLECTION_NAME,
+            vectors_config=VectorParams(
+                size=vector_size,
+                distance=Distance.COSINE,
+            ),
+        )
+        print("[QDRANT] Collection created")
 
-    vector_store = QdrantVectorStore(
-        client=client,
+def ingest_documents(data_dir: str):
+    texts = []
+
+    for root, _, files in os.walk(data_dir):
+        for file in files:
+            if file.endswith(".txt"):
+                path = os.path.join(root, file)
+                with open(path, "r", encoding="utf-8") as f:
+                    texts.append(f.read())
+
+    if not texts:
+        print("[ERROR] No text files found")
+        return
+
+    print(f"[INFO] Loaded {len(texts)} documents")
+
+    vectors = embedding_model.encode(texts)
+
+    ensure_collection(vector_size=len(vectors[0]))
+
+    points = []
+    for text, vector in zip(texts, vectors):
+        points.append(
+            PointStruct(
+                id=str(uuid.uuid4()),
+                vector=vector.tolist(),
+                payload={"text": text},
+            )
+        )
+
+    client.upsert(
         collection_name=COLLECTION_NAME,
+        points=points,
     )
 
-    embed_model = HuggingFaceEmbedding(
-        model_name="sentence-transformers/all-MiniLM-L6-v2"
-    )
-
-    storage_context = StorageContext.from_defaults(
-        vector_store=vector_store
-    )
-
-    print("[INDEX] Writing vectors to Qdrant...")
-    VectorStoreIndex.from_documents(
-        docs,
-        storage_context=storage_context,
-        embed_model=embed_model,
-        show_progress=True,
-    )
-
-    print(f"[SUCCESS] Stored in collection: {COLLECTION_NAME}")
+    print("[SUCCESS] Data uploaded to Qdrant")

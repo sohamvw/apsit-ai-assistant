@@ -1,7 +1,6 @@
-requests
-beautifulsoup4
-qdrant-client
-sentence-transformers
-llama-index>=0.10.37
-llama-index-vector-stores-qdrant
-llama-index-embeddings-huggingface
+requests==2.32.3
+beautifulsoup4==4.12.3
+qdrant-client==1.9.1
+sentence-transformers==2.7.0
+python-dotenv==1.0.1
+numpy==1.26.4
