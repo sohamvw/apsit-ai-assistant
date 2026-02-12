@@ -5,12 +5,12 @@ import docx
 import pandas as pd
 from io import BytesIO
 
-def extract_html(url):
-    r = requests.get(url, timeout=10)
-    soup = BeautifulSoup(r.text, "html.parser")
+def extract_html(content):
+    soup = BeautifulSoup(content, "html.parser")
     for tag in soup(["script", "style", "nav", "footer"]):
         tag.decompose()
     return soup.get_text(separator=" ", strip=True)
+
 
 def extract_pdf(content):
     text = ""

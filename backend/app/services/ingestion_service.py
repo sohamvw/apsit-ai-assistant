@@ -68,7 +68,7 @@ def run_ingestion():
                 # Extract Text
                 # --------------------------
                 if "text/html" in content_type:
-                    text = extract_html(url)
+                   text = extract_html(content)
 
                 elif "pdf" in content_type:
                     text = extract_pdf(content)
