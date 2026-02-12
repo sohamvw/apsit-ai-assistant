@@ -1,4 +1,4 @@
-from app.services.vector_service import client, get_embedding
+from app.services.vector_service import client, get_dense_embedding
 from app.core.config import get_settings
 
 settings = get_settings()
@@ -6,7 +6,7 @@ settings = get_settings()
 
 def hybrid_search(query: str, limit: int = 5):
 
-    query_vector = get_embedding(query)
+    query_vector = get_dense_embedding(query)
 
     results = client.query_points(
         collection_name=settings.QDRANT_COLLECTION,
