@@ -26,6 +26,6 @@ Question:
         contents=prompt,
     )
 
-    async for chunk in response:
+    for chunk in response:
         if chunk.text:
             yield chunk.text
