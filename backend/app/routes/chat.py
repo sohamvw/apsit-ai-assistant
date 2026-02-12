@@ -14,6 +14,7 @@ class ChatRequest(BaseModel):
 @router.post("/")
 async def chat(req: ChatRequest):
     docs = deep_search(req.query)
+
     top_docs = docs[:4]
 
     async def generate():

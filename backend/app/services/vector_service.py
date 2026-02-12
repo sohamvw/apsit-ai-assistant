@@ -20,9 +20,11 @@ client = QdrantClient(
     api_key=settings.QDRANT_API_KEY,
 )
 
+COLLECTION_NAME = settings.QDRANT_COLLECTION
+
 
 # -----------------------------
-# Embedding
+# Embedding Function
 # -----------------------------
 def get_embedding(text: str):
     response = genai_client.models.embed_content(
@@ -36,49 +38,40 @@ def get_embedding(text: str):
 
 
 # -----------------------------
-from qdrant_client.http.exceptions import UnexpectedResponse
-
-def create_collection():
-    try:
-        client.get_collection(settings.QDRANT_COLLECTION)
-    except UnexpectedResponse:
-        client.create_collection(
-            collection_name=settings.QDRANT_COLLECTION,
-            vectors_config=VectorParams(
-                size=3072,
-                distance=Distance.COSINE,
-            ),
-        )
-
-    try:
-        client.get_collection("apsit_ingestion_state")
-    except UnexpectedResponse:
-        client.create_collection(
-            collection_name="apsit_ingestion_state",
-            vectors_config=VectorParams(
-                size=3072,
-                distance=Distance.COSINE,
-            ),
-        )
-
+# Create Collection (SAFE)
 # -----------------------------
+def create_collection():
+    collections = client.get_collections().collections
+    existing = [c.name for c in collections]
+
+    if COLLECTION_NAME not in existing:
+        client.create_collection(
+            collection_name=COLLECTION_NAME,
+            vectors_config=VectorParams(
+                size=3072,
+                distance=Distance.COSINE,
+            ),
+        )
+        print("Collection created.")
+    else:
+        print("Collection already exists.")
+
 # Insert Document
 # -----------------------------
-def insert_document(text: str, url: str):
-    vector = get_embedding(text)
+def insert_document(text: str, source: str):
+    embedding = get_embedding(text)
 
     client.upsert(
-        collection_name=settings.QDRANT_COLLECTION,
+        collection_name=COLLECTION_NAME,
         points=[
             PointStruct(
                 id=str(uuid.uuid4()),
-                vector=vector,
+                vector=embedding,
                 payload={
                     "text": text,
-                    "url": url,
+                    "source": source
                 },
             )
         ],
     )
-# Backward compatibility for old imports
-get_dense_embedding = get_embedding
+

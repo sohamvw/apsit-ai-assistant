@@ -40,13 +40,13 @@ def run_ingestion():
                 continue
 
             if text and len(text.strip()) > 300:
-                insert_document(text[:5000], url)
+                insert_document(text[:8000], url)
                 count += 1
-                print(f"Ingested: {url}")
+                print("Ingested: {url}")
 
-            time.sleep(0.3)
+            time.sleep(0.2)
 
         except Exception as e:
-            print(f"Failed: {url} -> {e}")
+            print("Failed: {url} -> {e}")
 
     print("Ingestion completed. Total inserted: {count}")

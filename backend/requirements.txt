@@ -13,3 +13,4 @@ openpyxl
 python-pptx
 tqdm
 playwright
+sentence-transformers

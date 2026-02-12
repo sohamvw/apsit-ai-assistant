@@ -3,7 +3,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from app.routes.chat import router as chat_router
 from app.routes.ingestion import router as ingestion_router
 from app.services.vector_service import create_collection
-import os
+import asyncio
 
 app = FastAPI(title="APSIT AI Assistant")
 
@@ -21,7 +21,12 @@ app.include_router(ingestion_router)
 
 @app.on_event("startup")
 async def startup_event():
-    create_collection()
+    print("🚀 Server starting...")
+    try:
+        await asyncio.to_thread(create_collection)
+        print("✅ Qdrant collection ready")
+    except Exception as e:
+        print("❌ Failed to create collection:", str(e))
 
 
 @app.get("/health")

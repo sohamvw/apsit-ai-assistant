@@ -1,6 +1,4 @@
 from app.services.vector_service import client, get_embedding
-
-
 from app.core.config import get_settings
 
 settings = get_settings()
@@ -14,7 +12,7 @@ def hybrid_search(query: str, limit: int = 5):
         collection_name=settings.QDRANT_COLLECTION,
         query=query_vector,
         limit=limit,
-        with_payload=True
+        with_payload=True,
     )
 
     documents = []
@@ -22,7 +20,7 @@ def hybrid_search(query: str, limit: int = 5):
     for point in results.points:
         documents.append({
             "text": point.payload.get("text", ""),
-            "url": point.payload.get("url", "")
+            "url": point.payload.get("source", "")
         })
 
     return documents
