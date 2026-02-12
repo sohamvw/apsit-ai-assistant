@@ -1,12 +1,14 @@
 from qdrant_client import QdrantClient
 from qdrant_client.http.models import Distance, VectorParams, SparseVectorParams
-import google.generativeai as genai
+from google import genai
 from app.core.config import get_settings
 
 settings = get_settings()
 
-genai.configure(api_key=settings.GEMINI_API_KEY)
+# Gemini client
+genai_client = genai.Client(api_key=settings.GEMINI_API_KEY)
 
+# Qdrant client
 client = QdrantClient(
     url=settings.QDRANT_URL,
     api_key=settings.QDRANT_API_KEY,
@@ -14,11 +16,11 @@ client = QdrantClient(
 
 
 def get_dense_embedding(text: str):
-    response = genai.embed_content(
-        model="models/embedding-001",
-        content=text
+    response = genai_client.models.embed_content(
+        model="text-embedding-004",
+        contents=text
     )
-    return response["embedding"]
+    return response.embeddings[0].values
 
 
 def create_collection():
