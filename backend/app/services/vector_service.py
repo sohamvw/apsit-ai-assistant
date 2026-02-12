@@ -35,3 +35,4 @@ def create_collection():
             distance=Distance.COSINE,
         ),
     )
+print("QDRANT URL RAW:", settings.QDRANT_URL)
