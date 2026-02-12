@@ -15,6 +15,49 @@ client = QdrantClient(
     api_key=settings.QDRANT_API_KEY,
 )
 
+
+# -----------------------------
+# Embedding Function
+# -----------------------------
+def get_dense_embedding(text: str, is_query: bool = False):
+
+    task_type = "RETRIEVAL_QUERY" if is_query else "RETRIEVAL_DOCUMENT"
+
+    response = genai_client.models.embed_content(
+        model="gemini-embedding-001",
+        contents=text,
+        config=types.EmbedContentConfig(
+            task_type=task_type
+        )
+    )
+
+    return response.embeddings[0].values
+
+
+
+
+
+
+
+
+
+'''from qdrant_client import QdrantClient
+from qdrant_client.http.models import Distance, VectorParams
+from google import genai
+from google.genai import types
+from app.core.config import get_settings
+
+settings = get_settings()
+
+# Gemini client
+genai_client = genai.Client(api_key=settings.GEMINI_API_KEY)
+
+# Qdrant client
+client = QdrantClient(
+    url=settings.QDRANT_URL,
+    api_key=settings.QDRANT_API_KEY,
+)
+
 # -----------------------------
 # Embedding Function
 # -----------------------------
@@ -47,3 +90,5 @@ def create_collection():
         print("Collection created.")
     else:
         print("Collection already exists.")
+'''
+
