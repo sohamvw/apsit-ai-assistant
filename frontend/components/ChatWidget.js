@@ -3,7 +3,7 @@
 import { useState, useEffect, useRef } from "react";
 
 export default function ChatWidget() {
-  const BACKEND = process.env.NEXT_PUBLIC_BACKEND_URL;
+  const BACKEND = process.env.NEXT_PUBLIC_API_URL;
 
   const [open, setOpen] = useState(false);
   const [messages, setMessages] = useState([]);
@@ -28,7 +28,14 @@ export default function ChatWidget() {
     "Maithili","Santali","Nepali","Kashmiri"
   ];
 
-  // Auto detect browser language
+  // 🚨 Safety check
+  useEffect(() => {
+    if (!BACKEND) {
+      console.error("NEXT_PUBLIC_BACKEND_URL is NOT defined!");
+    }
+  }, []);
+
+  // 🌍 Auto detect browser language
   useEffect(() => {
     const browserLang = navigator.language.toLowerCase();
 
@@ -40,14 +47,16 @@ export default function ChatWidget() {
     else setLanguage("English");
   }, []);
 
-  // Scroll to bottom
+  // 🔄 Auto scroll
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
 
-  // Translate intents
+  // 🌐 Translate suggested intents
   useEffect(() => {
     const translateIntents = async () => {
+      if (!BACKEND) return;
+
       if (language === "English" || language === "Auto") {
         setTranslatedIntents(masterIntents);
         return;
@@ -63,9 +72,12 @@ export default function ChatWidget() {
           })
         });
 
+        if (!res.ok) throw new Error("Translate failed");
+
         const data = await res.json();
         setTranslatedIntents(data.translations || masterIntents);
-      } catch {
+      } catch (err) {
+        console.error("Translate error:", err);
         setTranslatedIntents(masterIntents);
       }
     };
@@ -74,6 +86,11 @@ export default function ChatWidget() {
   }, [language]);
 
   const sendMessage = async (text) => {
+    if (!BACKEND) {
+      alert("Backend URL not configured.");
+      return;
+    }
+
     const query = text || input;
     if (!query.trim()) return;
 
@@ -85,22 +102,31 @@ export default function ChatWidget() {
       const res = await fetch(`${BACKEND}/chat/`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          query,
-          language
-        })
+        body: JSON.stringify({ query, language })
       });
+
+      if (!res.ok) {
+        throw new Error("Server error");
+      }
 
       const data = await res.json();
 
       setMessages((prev) => [
         ...prev,
-        { role: "assistant", content: data.answer || "No response" }
+        {
+          role: "assistant",
+          content: data.answer || "No response available."
+        }
       ]);
-    } catch {
+    } catch (err) {
+      console.error("Chat error:", err);
       setMessages((prev) => [
         ...prev,
-        { role: "assistant", content: "Something went wrong." }
+        {
+          role: "assistant",
+          content:
+            "⚠️ System busy or API limit reached. Please try again later."
+        }
       ]);
     }
 
