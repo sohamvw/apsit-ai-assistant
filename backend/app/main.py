@@ -2,6 +2,9 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from app.routes.chat import router as chat_router
 from app.routes.ingestion import router as ingestion_router
+from app.routes import translate
+
+
 
 app = FastAPI(title="APSIT AI Assistant")
 
@@ -12,7 +15,7 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
-
+app.include_router(translate.router)
 app.include_router(chat_router)
 app.include_router(ingestion_router)
 
