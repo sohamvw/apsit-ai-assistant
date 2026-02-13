@@ -1,9 +1,10 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
-import axios from "axios";
 
 export default function ChatWidget() {
+  const BACKEND = process.env.NEXT_PUBLIC_BACKEND_URL;
+
   const [open, setOpen] = useState(false);
   const [messages, setMessages] = useState([]);
   const [input, setInput] = useState("");
@@ -27,25 +28,24 @@ export default function ChatWidget() {
     "Maithili","Santali","Nepali","Kashmiri"
   ];
 
-  // 🧠 Auto detect browser language
+  // Auto detect browser language
   useEffect(() => {
-    const browserLang = navigator.language;
+    const browserLang = navigator.language.toLowerCase();
 
-    const match = supportedLanguages.find((lang) =>
-      browserLang.toLowerCase().includes(lang.slice(0, 2).toLowerCase())
-    );
-
-    if (match) {
-      setLanguage(match);
-    }
+    if (browserLang.includes("hi")) setLanguage("Hindi");
+    else if (browserLang.includes("mr")) setLanguage("Marathi");
+    else if (browserLang.includes("gu")) setLanguage("Gujarati");
+    else if (browserLang.includes("ta")) setLanguage("Tamil");
+    else if (browserLang.includes("te")) setLanguage("Telugu");
+    else setLanguage("English");
   }, []);
 
-  // 🔄 Scroll
+  // Scroll to bottom
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
 
-  // 🌍 Translate intents when language changes
+  // Translate intents
   useEffect(() => {
     const translateIntents = async () => {
       if (language === "English" || language === "Auto") {
@@ -54,15 +54,17 @@ export default function ChatWidget() {
       }
 
       try {
-        const res = await axios.post(
-          "https://apsit-ai-assistant-production.up.railway.app/translate/",
-          {
+        const res = await fetch(`${BACKEND}/translate/`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
             texts: masterIntents,
             language
-          }
-        );
+          })
+        });
 
-        setTranslatedIntents(res.data.translations);
+        const data = await res.json();
+        setTranslatedIntents(data.translations || masterIntents);
       } catch {
         setTranslatedIntents(masterIntents);
       }
@@ -80,17 +82,20 @@ export default function ChatWidget() {
     setLoading(true);
 
     try {
-      const res = await axios.post(
-        "https://apsit-ai-assistant-production.up.railway.app/chat/",
-        {
+      const res = await fetch(`${BACKEND}/chat/`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
           query,
           language
-        }
-      );
+        })
+      });
+
+      const data = await res.json();
 
       setMessages((prev) => [
         ...prev,
-        { role: "assistant", content: res.data.answer || res.data }
+        { role: "assistant", content: data.answer || "No response" }
       ]);
     } catch {
       setMessages((prev) => [
@@ -159,10 +164,7 @@ export default function ChatWidget() {
             <select
               value={language}
               onChange={(e) => setLanguage(e.target.value)}
-              style={{
-                borderRadius: "6px",
-                fontSize: "12px"
-              }}
+              style={{ borderRadius: "6px", fontSize: "12px" }}
             >
               <option value="Auto">Auto</option>
               {supportedLanguages.map((lang, i) => (
