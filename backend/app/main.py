@@ -24,6 +24,9 @@ app.include_router(ingestion_router)
 async def health():
     return {"status": "ok"}
 
+@app.get("/")
+def root():
+    return {"status": "APSIT AI Assistant Backend Running"}
 
 
 
