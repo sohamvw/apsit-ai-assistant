@@ -11,7 +11,7 @@ from google.genai import types
 # =============================
 # CONFIG
 # =============================
-GEMINI_API_KEY="AIzaSyDm7IX9Q2bOR4UfOwL6pTwDMKn36ra3D54"
+GEMINI_API_KEY="AIzaSyCNXTNLtKLqOhZVy48WA83cjGOVb3bJGMc"
 QDRANT_URL="https://18c5a0e7-8cd5-4930-8247-0752b0608513.us-east4-0.gcp.cloud.qdrant.io"
 QDRANT_API_KEY="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJhY2Nlc3MiOiJtIn0.FrldmN7Vk9SpEbgDFOTnXEuzozItJQTcfQ7L0mpXoxk"
 
