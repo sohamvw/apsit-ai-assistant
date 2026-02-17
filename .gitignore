@@ -4,21 +4,18 @@ __pycache__/
 .venv/
 node_modules/
 .next/
-# Python
 __pycache__/
 *.pyc
 *.pyo
 *.pyd
-
-# Virtual Environment
 .venv/
 venv/
 
-# Environment Variables
+
 .env
 
-# VS Code
+
 .vscode/
 
-# Mac
+
 .DS_Store

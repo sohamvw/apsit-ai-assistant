@@ -1,0 +1,9 @@
+requests
+beautifulsoup4
+lxml
+pdfplumber
+sentence-transformers
+torch
+qdrant-client
+python-dotenv
+tqdm
