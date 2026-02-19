@@ -1,23 +1,20 @@
 from pydantic_settings import BaseSettings
-from functools import lru_cache
 
 
 class Settings(BaseSettings):
-    APP_NAME: str = "APSIT AI Assistant"
-    ENV: str = "production"
-
-    GEMINI_API_KEY: str
-
+    # Qdrant
     QDRANT_URL: str
     QDRANT_API_KEY: str
-    QDRANT_COLLECTION: str = "apsit_knowledge"
+    QDRANT_COLLECTION: str = "apsit_collection"
 
-    EMBEDDING_MODEL: str = "intfloat/multilingual-e5-large"
+    # Embedding Model (E5)
+    EMBEDDING_MODEL: str = "intfloat/multilingual-e5-base"
+
+    # Gemini LLM (ONLY for answer generation)
+    GEMINI_API_KEY: str
 
     class Config:
         env_file = ".env"
 
 
-@lru_cache()
-def get_settings():
-    return Settings()
+settings = Settings()

@@ -9,3 +9,4 @@ node_modules/
 venv/
 .vscode/
 .DS_Store
+ingestion/ingestion_progress.json

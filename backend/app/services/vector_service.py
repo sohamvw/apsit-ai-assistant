@@ -1,94 +1,41 @@
+from sentence_transformers import SentenceTransformer
 from qdrant_client import QdrantClient
-from qdrant_client.http.models import Distance, VectorParams
-from google import genai
-from google.genai import types
-from app.core.config import get_settings
+from app.core.config import settings
 
-settings = get_settings()
+print("Loading multilingual-e5-base embedding model...")
 
-# Gemini client
-genai_client = genai.Client(api_key=settings.GEMINI_API_KEY)
+model = SentenceTransformer(
+    settings.EMBEDDING_MODEL,
+    device="cpu"
+)
 
-# Qdrant client
 client = QdrantClient(
     url=settings.QDRANT_URL,
     api_key=settings.QDRANT_API_KEY,
+    timeout=60,
 )
 
 
-# -----------------------------
-# Embedding Function
-# -----------------------------
-def get_dense_embedding(text: str, is_query: bool = False):
+def embed_query(text: str):
+    # E5 requires prefix
+    text = f"query: {text}"
 
-    task_type = "RETRIEVAL_QUERY" if is_query else "RETRIEVAL_DOCUMENT"
-
-    response = genai_client.models.embed_content(
-        model="gemini-embedding-001",
-        contents=text,
-        config=types.EmbedContentConfig(
-            task_type=task_type
-        )
+    embedding = model.encode(
+        text,
+        normalize_embeddings=True,
+        batch_size=8
     )
 
-    return response.embeddings[0].values
+    return embedding.tolist()
 
 
+def search_qdrant(query: str, top_k: int = 5):
+    query_vector = embed_query(query)
 
-
-
-
-
-
-
-'''from qdrant_client import QdrantClient
-from qdrant_client.http.models import Distance, VectorParams
-from google import genai
-from google.genai import types
-from app.core.config import get_settings
-
-settings = get_settings()
-
-# Gemini client
-genai_client = genai.Client(api_key=settings.GEMINI_API_KEY)
-
-# Qdrant client
-client = QdrantClient(
-    url=settings.QDRANT_URL,
-    api_key=settings.QDRANT_API_KEY,
-)
-
-# -----------------------------
-# Embedding Function
-# -----------------------------
-def get_dense_embedding(text: str):
-    response = genai_client.models.embed_content(
-        model="gemini-embedding-001",
-        contents=text,
-        config=types.EmbedContentConfig(
-            task_type="RETRIEVAL_DOCUMENT"
-        )
+    results = client.search(
+        collection_name=settings.QDRANT_COLLECTION,
+        query_vector=query_vector,
+        limit=top_k,
     )
-    return response.embeddings[0].values
 
-
-# -----------------------------
-# Create Collection
-# -----------------------------
-def create_collection():
-    collections = client.get_collections().collections
-    existing = [c.name for c in collections]
-
-    if settings.QDRANT_COLLECTION not in existing:
-        client.create_collection(
-            collection_name=settings.QDRANT_COLLECTION,
-            vectors_config=VectorParams(
-                size=3072,
-                distance=Distance.COSINE,
-            ),
-        )
-        print("Collection created.")
-    else:
-        print("Collection already exists.")
-'''
-
+    return results
