@@ -1,13 +1,6 @@
-from sentence_transformers import SentenceTransformer
 from qdrant_client import QdrantClient
 from app.core.config import settings
-
-print("Loading multilingual-e5-base embedding model...")
-
-model = SentenceTransformer(
-    settings.EMBEDDING_MODEL,
-    device="cpu"
-)
+import requests
 
 client = QdrantClient(
     url=settings.QDRANT_URL,
@@ -17,16 +10,19 @@ client = QdrantClient(
 
 
 def embed_query(text: str):
-    # E5 requires prefix
-    text = f"query: {text}"
+    """
+    Instead of loading a local model,
+    we call a lightweight embedding API.
+    """
 
-    embedding = model.encode(
-        text,
-        normalize_embeddings=True,
-        batch_size=8
+    response = requests.post(
+        f"{settings.EMBEDDING_API_URL}",
+        json={"text": f"query: {text}"},
+        timeout=30,
     )
 
-    return embedding.tolist()
+    response.raise_for_status()
+    return response.json()["embedding"]
 
 
 def search_qdrant(query: str, top_k: int = 5):
