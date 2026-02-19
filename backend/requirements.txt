@@ -4,6 +4,3 @@ pydantic-settings
 google-genai
 qdrant-client
 python-dotenv
-sentence-transformers
-transformers
-torch --index-url https://download.pytorch.org/whl/cpu
