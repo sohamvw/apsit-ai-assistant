@@ -1,44 +1,53 @@
-import uuid
-from app.services.vector_service import client, get_dense_embedding
-from app.services.crawler_service import crawl_site
-from app.core.config import get_settings
-
-settings = get_settings()
-
-
-def run_ingestion():
-    print("🚀 Starting ingestion...")
-
-    documents = crawl_site(
-    start_url="https://www.apsit.edu.in/",
-    domain="apsit.edu.in"
+from crawler.crawler_service import crawl_site
+from processing.hash_compare import (
+    generate_hash,
+    has_content_changed,
+    update_hash,
 )
+from processing.chunker import chunk_text
+from embedding.text_embedder import TextEmbedder
+from qdrant.upsert_service import upsert_chunks
 
 
-    points = []
+def run_pipeline():
+    start_url = "https://apsit.edu.in"
+    domain = "apsit.edu.in"
+
+    embedder = TextEmbedder()
+
+    documents = crawl_site(start_url, domain)
+
+    print(f"📄 Total documents found: {len(documents)}")
 
     for doc in documents:
-        text = doc["text"]
+        combined_text = f"{doc['title']} {doc['text']} {doc['image_alt_text']}"
 
-        if not text or len(text) < 50:
+        content_hash = generate_hash(combined_text)
+
+        if not has_content_changed(doc["url"], content_hash):
+            print(f"Skipping unchanged page: {doc['url']}")
             continue
 
-        embedding = get_dense_embedding(text)
+        chunks = chunk_text(combined_text)
 
-        points.append({
-            "id": str(uuid.uuid4()),
-            "vector": embedding,
-            "payload": {
+        if not chunks:
+            continue
+
+        embeddings = embedder.embed_documents(chunks)
+
+        metadata_list = [
+            {
                 "url": doc["url"],
-                "text": text[:1000]
+                "title": doc["title"],
+                "source_type": "html",
             }
-        })
+            for _ in chunks
+        ]
 
-    if points:
-        client.upsert(
-            collection_name=settings.QDRANT_COLLECTION,
-            points=points
-        )
-        print(f"✅ Inserted {len(points)} documents into Qdrant")
-    else:
-        print("⚠️ No documents to insert")
+        upsert_chunks(doc["url"], chunks, embeddings, metadata_list)
+
+        update_hash(doc["url"], content_hash)
+
+
+if __name__ == "__main__":
+    run_pipeline()
