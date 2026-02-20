@@ -20,7 +20,14 @@ def embed_query(text: str):
     response.raise_for_status()
     data = response.json()
 
-    return data["embeddings"][0]
+    embedding = data["embeddings"][0]
+
+    print("\n=== EMBEDDING DEBUG ===")
+    print("Query:", text)
+    print("Embedding length:", len(embedding))
+    print("=======================\n")
+
+    return embedding
 
 
 def search_qdrant(query: str, top_k: int = 5):
@@ -32,5 +39,18 @@ def search_qdrant(query: str, top_k: int = 5):
         limit=top_k,
         with_payload=True,
     )
+
+    print("\n=== QDRANT DEBUG ===")
+    print("Top K:", top_k)
+    print("Number of points returned:", len(response.points))
+
+    for idx, point in enumerate(response.points):
+        print(f"\nResult {idx + 1}")
+        print("Score:", point.score)
+        print("Payload text preview:",
+              point.payload.get("text", "")[:200])
+        print("URL:", point.payload.get("url"))
+
+    print("=====================\n")
 
     return response.points
