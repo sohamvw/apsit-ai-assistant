@@ -26,10 +26,11 @@ def embed_query(text: str):
 def search_qdrant(query: str, top_k: int = 5):
     query_vector = embed_query(query)
 
-    search_result = client.search_points(
+    response = client.query_points(
         collection_name=settings.QDRANT_COLLECTION,
         query=query_vector,
         limit=top_k,
+        with_payload=True,
     )
 
-    return search_result.points
+    return response.points
