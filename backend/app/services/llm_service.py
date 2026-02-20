@@ -37,10 +37,11 @@ Question:
 """
 
     response = client.models.generate_content_stream(
-        model="gemini-1.5-flash",
+        model="gemini-2.5-flash",
         contents=prompt,
     )
 
-    async for chunk in response:
-        if chunk.text:
+    # IMPORTANT: use normal for loop, NOT async for
+    for chunk in response:
+        if hasattr(chunk, "text") and chunk.text:
             yield chunk.text
