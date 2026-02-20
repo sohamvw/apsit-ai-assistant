@@ -11,10 +11,6 @@ client = QdrantClient(
 
 
 def embed_query(text: str):
-    """
-    Call external embedding microservice (Render).
-    """
-
     response = requests.post(
         f"{settings.EMBEDDING_API_URL}/embed",
         json={"texts": [text]},
@@ -22,21 +18,18 @@ def embed_query(text: str):
     )
 
     response.raise_for_status()
-
     data = response.json()
 
-    # We expect:
-    # { "embeddings": [[1024 floats]] }
     return data["embeddings"][0]
 
 
 def search_qdrant(query: str, top_k: int = 5):
     query_vector = embed_query(query)
 
-    results = client.search(
+    search_result = client.search_points(
         collection_name=settings.QDRANT_COLLECTION,
-        query_vector=query_vector,
+        query=query_vector,
         limit=top_k,
     )
 
-    return results
+    return search_result.points
