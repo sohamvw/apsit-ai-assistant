@@ -7,11 +7,11 @@ class Settings(BaseSettings):
     QDRANT_API_KEY: str
     QDRANT_COLLECTION: str = "apsit_collection"
 
-    # Embedding Model (E5)
-    EMBEDDING_MODEL: str = "intfloat/multilingual-e5-base"
-
-    # Gemini LLM (ONLY for answer generation)
+    # LLM (Gemini)
     GEMINI_API_KEY: str
+
+    # Embedding microservice (NEW)
+    EMBEDDING_API_URL: str
 
     class Config:
         env_file = ".env"

@@ -2,6 +2,7 @@ from qdrant_client import QdrantClient
 from app.core.config import settings
 import requests
 
+
 client = QdrantClient(
     url=settings.QDRANT_URL,
     api_key=settings.QDRANT_API_KEY,
@@ -11,18 +12,22 @@ client = QdrantClient(
 
 def embed_query(text: str):
     """
-    Instead of loading a local model,
-    we call a lightweight embedding API.
+    Call external embedding microservice (Render).
     """
 
     response = requests.post(
-        f"{settings.EMBEDDING_API_URL}",
-        json={"text": f"query: {text}"},
+        f"{settings.EMBEDDING_API_URL}/embed",
+        json={"texts": [text]},
         timeout=30,
     )
 
     response.raise_for_status()
-    return response.json()["embedding"]
+
+    data = response.json()
+
+    # We expect:
+    # { "embeddings": [[1024 floats]] }
+    return data["embeddings"][0]
 
 
 def search_qdrant(query: str, top_k: int = 5):
